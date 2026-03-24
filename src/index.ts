@@ -4,8 +4,10 @@ import path from 'path';
 import {
   ASSISTANT_NAME,
   CREDENTIAL_PROXY_PORT,
+  DEFAULT_HISTORY_LIMIT,
   IDLE_TIMEOUT,
   POLL_INTERVAL,
+  TELEGRAM_HISTORY_LIMIT,
   TIMEZONE,
   TRIGGER_PATTERN,
 } from './config.js';
@@ -139,6 +141,10 @@ export function _setRegisteredGroups(
   registeredGroups = groups;
 }
 
+function historyLimit(chatJid: string): number {
+  return chatJid.startsWith('tg:') ? TELEGRAM_HISTORY_LIMIT : DEFAULT_HISTORY_LIMIT;
+}
+
 /**
  * Process all pending messages for a group.
  * Called by the GroupQueue when it's this group's turn.
@@ -160,6 +166,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
     chatJid,
     sinceTimestamp,
     ASSISTANT_NAME,
+    historyLimit(chatJid),
   );
 
   if (missedMessages.length === 0) return true;
@@ -410,6 +417,7 @@ async function startMessageLoop(): Promise<void> {
             chatJid,
             lastAgentTimestamp[chatJid] || '',
             ASSISTANT_NAME,
+            historyLimit(chatJid),
           );
           const messagesToSend =
             allPending.length > 0 ? allPending : groupMessages;
@@ -449,7 +457,7 @@ async function startMessageLoop(): Promise<void> {
 function recoverPendingMessages(): void {
   for (const [chatJid, group] of Object.entries(registeredGroups)) {
     const sinceTimestamp = lastAgentTimestamp[chatJid] || '';
-    const pending = getMessagesSince(chatJid, sinceTimestamp, ASSISTANT_NAME);
+    const pending = getMessagesSince(chatJid, sinceTimestamp, ASSISTANT_NAME, historyLimit(chatJid));
     if (pending.length > 0) {
       logger.info(
         { group: group.name, pendingCount: pending.length },

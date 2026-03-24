@@ -67,6 +67,9 @@ export const TRIGGER_PATTERN = new RegExp(
   'i',
 );
 
+export const TELEGRAM_HISTORY_LIMIT = 10;
+export const DEFAULT_HISTORY_LIMIT = 200;
+
 // Timezone for scheduled tasks (cron expressions, etc.)
 // Uses system timezone by default
 export const TIMEZONE =
